@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dialogflow Event Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; display: flex; gap: 20px; }
+    
+    /* ログ表示エリアのスタイル */
+    #log-container {
+      width: 60%;
+      height: 80vh;
+      border: 1px solid #ccc;
+      background-color: #f4f4f4;
+      padding: 10px;
+      overflow-y: scroll;
+      border-radius: 5px;
+    }
+    .log-entry {
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #ddd;
+      font-size: 14px;
+    }
+    .log-time { color: #666; font-size: 12px; margin-right: 10px; }
+    .log-type { font-weight: bold; color: #0056b3; margin-right: 10px; }
+    .log-detail { display: block; color: #333; margin-top: 4px; white-space: pre-wrap; }
+  </style>
+
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+</head>
+<body>
+
+  <div id="log-container">
+    <div class="log-entry"><strong>イベントログ待機中...</strong></div>
+  </div>
+
+  <df-messenger
+    intent="WELCOME"
+    chat-title="イベント検証ボット"
+    agent-id="c4b260eb-dc11-454f-ae82-401105c9455a"
+    language-code="ja"
+    expand="true">
+  </df-messenger>
+
+  <script>
+    const dfMessenger = document.querySelector('df-messenger');
+    const logContainer = document.getElementById('log-container');
+
+    // ログを画面に追加する関数
+    function addLog(type, detail) {
+      const now = new Date();
+      const timeStr = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+      
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.innerHTML = `
+        <span class="log-time">[${timeStr}]</span>
+        <span class="log-type">${type}</span>
+        <span class="log-detail">${detail}</span>
+      `;
+      logContainer.prepend(div); // 新しいものを上に追加
+    }
+
+    // --- イベントリスナーの設定 ---
+
+    // 1. チャット機能がロードされた時
+    dfMessenger.addEventListener('df-messenger-loaded', function(event) {
+      addLog('LOADED', 'チャット画面がロードされました');
+    });
+
+    // 2. ユーザーが何か入力してEnterを押した時
+    dfMessenger.addEventListener('df-user-input-entered', function(event) {
+      // event.detail.input で入力内容が取れる場合があります
+      addLog('USER INPUT', 'ユーザーが送信しました');
+    });
+
+    // 3. リクエストがサーバーへ送られた時
+    dfMessenger.addEventListener('df-request-sent', function(event) {
+      addLog('REQUEST SENT', 'サーバーへ問い合わせ中...');
+    });
+
+    // 4. ボットから返答が返ってきた時
+    dfMessenger.addEventListener('df-response-received', function(event) {
+      // レスポンス内容の要約を取得
+      const responseText = JSON.stringify(event.detail.response.queryResult.fulfillmentText);
+      addLog('RESPONSE RECEIVED', `返答を受信: ${responseText}`);
+    });
+
+    // 5. エラー発生時
+    dfMessenger.addEventListener('df-messenger-error', function(event) {
+      addLog('ERROR', 'エラーが発生しました');
+    });
+  </script>
+
+</body>
+</html>
